@@ -6,6 +6,9 @@ and basic DOM parsing.
 
 References:
 
+ +restler
+   - https://github.com/danwrong/restler
+
  + cheerio
    - https://github.com/MatthewMueller/cheerio
    - http://encosia.com/cheerio-faster-windows-friendly-alternative-jsdom/
@@ -22,6 +25,7 @@ References:
 */
 
 var fs = require('fs');
+var rest = require('restler');
 var program = require('commander');
 var cheerio = require('cheerio');
 var HTMLFILE_DEFAULT = "index.html";
@@ -61,12 +65,36 @@ var clone = function(fn) {
     return fn.bind({});
 };
 
+var buildfn = function(csvfile) {
+    var response2console = function(result, response) {
+        if (result instanceof Error) {
+            console.error('Error: ' + util.format(response.message));
+        } else {
+            console.error("Wrote %s", csvfile);
+            fs.writeFileSync(csvfile, result);
+        }
+    };
+    return response2console;
+};
+
 if(require.main == module) {
+  // Invoked from command line
     program
         .option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
+        .option('-u, --url <url>', 'URL')
         .option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
         .parse(process.argv);
-    var checkJson = checkHtmlFile(program.file, program.checks);
+    
+
+    var checkFile=program.file;
+    if (program.url.length >0) {
+      var tempFile = "TempUrlFile;
+      var response2console = buildfn(tempFile);
+      rest.get(program.url).on('complete', response2console);
+      checkFile=tempFile;
+    }
+
+    var checkJson = checkHtmlFile(tempFile, program.checks);
     var outJson = JSON.stringify(checkJson, null, 4);
     console.log(outJson);
 } else {
